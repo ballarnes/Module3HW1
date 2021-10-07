@@ -14,13 +14,30 @@ namespace Module3HW1
             var list = new CustomList<int>(size);
             for (var i = 0; i < size; i++)
             {
-                list.Add(new Random().Next(1, 11));
+                list.Add(new Random().Next(1, 51));
             }
 
-            bool readOnly = list.IsReadOnly;
-
             bool remove = list.Remove(3);
-            list.RemoveAt(0);
+            list.RemoveAt(8);
+
+            foreach (var item in list)
+            {
+                Console.WriteLine(item);
+            }
+
+            int index = list.IndexOf(5);
+            bool contains = list.Contains(2);
+
+            list.AddRange(list);
+            list.Sort();
+
+            Console.WriteLine("=");
+            foreach (var item in list)
+            {
+                Console.WriteLine(item);
+            }
+
+            list.Clear();
         }
     }
 }

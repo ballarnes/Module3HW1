@@ -8,24 +8,21 @@ using Module3HW1.Comparer;
 
 namespace Module3HW1
 {
-    public class CustomList<T> : IList<T>
+    public class CustomList<T>
     {
         private T[] _items;
         private int _size;
-        private IComparer<T> _comparer;
 
         public CustomList()
         {
             _items = new T[4];
             _size = 4;
-            _comparer = new CustomListComparer<T>();
         }
 
         public CustomList(int n)
         {
             _items = new T[n];
             _size = n;
-            _comparer = new CustomListComparer<T>();
         }
 
         public int Count
@@ -33,14 +30,6 @@ namespace Module3HW1
             get
             {
                 return _size;
-            }
-        }
-
-        public bool IsReadOnly
-        {
-            get
-            {
-                return _items.IsReadOnly;
             }
         }
 
@@ -83,86 +72,27 @@ namespace Module3HW1
         {
             for (var i = 0; i < _items.Length; i++)
             {
-                var full = 0;
                 if (_items[i].Equals(default(T)))
                 {
-                    _items[i] = item;
+                    _items[i] = (T)item;
                     break;
-                }
-                else
-                {
-                    full++;
-                }
-
-                if (full == _size - 1)
-                {
-                    var tempItems = new T[_size];
-                    for (var j = 0; j < _items.Length; j++)
-                    {
-                        tempItems[j] = _items[j];
-                    }
-
-                    _items = new T[_size * 2];
-
-                    for (var j = 0; j <= tempItems.Length; j++)
-                    {
-                        _items[j] = tempItems[j];
-                        if (j == tempItems.Length)
-                        {
-                            _items[j] = item;
-                        }
-                    }
                 }
             }
         }
 
         public void AddRange(CustomList<T> items)
         {
-            var empty = 0;
-            for (var i = 0; i < _items.Length; i++)
+            int count = items.GetCount();
+            var tempList = new CustomList<T>(count);
+            for (var i = 0; i < count; i++)
             {
-                if (_items[i].Equals(default(T)))
-                {
-                    empty++;
-                }
+                tempList[i] = items[i];
             }
 
-            for (var i = 0; i < _items.Length; i++)
+            int index = GetSpace(count);
+            for (var i = index; i < index + count; i++)
             {
-                if (empty == items.Count && i - empty >= 0)
-                {
-                    i = i - empty;
-                    foreach (var item in items)
-                    {
-                        _items[i] = item;
-                    }
-                }
-                else
-                {
-                    var tempItems = new T[_size];
-                    for (var j = 0; j < tempItems.Length; j++)
-                    {
-                        tempItems[j] = _items[j];
-                    }
-
-                    _items = new T[_size * 2];
-
-                    for (var j = 0; j < tempItems.Length; j++)
-                    {
-                        _items[j] = tempItems[j];
-                    }
-
-                    for (var j = tempItems.Length; j < items.Count; j++)
-                    {
-                        if (j == tempItems.Length)
-                        {
-                            foreach (var item in items)
-                            {
-                                _items[j] = item;
-                            }
-                        }
-                    }
-                }
+                _items[i] = tempList[i - index];
             }
         }
 
@@ -172,7 +102,7 @@ namespace Module3HW1
             {
                 if (_items[i].Equals(item))
                 {
-                    _items[i] = default(T);
+                    RemoveAt(IndexOf(_items[i]));
                     return true;
                 }
             }
@@ -189,21 +119,20 @@ namespace Module3HW1
             else
             {
                 _items[index] = default(T);
+                for (var i = index + 1; i < _items.Length; i++)
+                {
+                    _items[i - 1] = _items[i];
+                    if (i == _items.Length - 1)
+                    {
+                        _items[i] = default(T);
+                    }
+                }
             }
         }
 
         public void Sort()
         {
-            for (var i = 0; i < _items.Length; i++)
-            {
-                for (var j = i; j < _items.Length; j++)
-                {
-                    if (_comparer.Compare(_items[i], _items[j]) == 1)
-                    {
-                        (_items[i], _items[j]) = (_items[j], _items[i]);
-                    }
-                }
-            }
+            Array.Sort(_items, new CustomListComparer<T>());
         }
 
         public void Clear()
@@ -219,7 +148,7 @@ namespace Module3HW1
             return _items.Contains(item);
         }
 
-        IEnumerator<T> IEnumerable<T>.GetEnumerator()
+        public IEnumerator GetEnumerator()
         {
             for (var i = 0; i < _items.Length; i++)
             {
@@ -227,17 +156,68 @@ namespace Module3HW1
             }
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
+        public int GetCount()
         {
-            return _items.GetEnumerator();
+            int count = 0;
+            for (var i = 0; i < _items.Length; i++)
+            {
+                if (_items[i].Equals(default(T)))
+                {
+                    i++;
+                }
+                else
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
-        public void CopyTo(T[] items, int index)
+        public int GetSpace(int size)
         {
-        }
+            var space = 0;
+            for (var i = 0; i < _items.Length; i++)
+            {
+                if (_items[i].Equals(default(T)))
+                {
+                    space++;
+                }
+                else
+                {
+                    i++;
+                }
+            }
 
-        public void Insert(int index, T item)
-        {
+            if (space < size)
+            {
+                var tempItems = new T[_size];
+                for (var j = 0; j < tempItems.Length; j++)
+                {
+                    tempItems[j] = _items[j];
+                }
+
+                _items = new T[_size * 2];
+
+                for (var j = 0; j < tempItems.Length; j++)
+                {
+                    _items[j] = tempItems[j];
+                }
+
+                return tempItems.Length;
+            }
+            else if (space >= size)
+            {
+                for (var i = 0; i < _items.Length; i++)
+                {
+                    if (_items[i].Equals(default(T)))
+                    {
+                        return IndexOf(_items[i]);
+                    }
+                }
+            }
+
+            return -1;
         }
     }
 }
